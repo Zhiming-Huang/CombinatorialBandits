@@ -1,6 +1,6 @@
 from .KL_UCB import KL_UCB_Plus
 from .Lower_bound import Lower_bound
-from .CombTS import CombTS_Basic, CombTS_Single, CombTS_Single_Aggr
+from .CombTS import CombTS_Basic, CombTS_Single
 from .CombUCB import CombUCB
 
 
@@ -232,7 +232,7 @@ class CSMABInstance:
         plt.grid(True)
         plt.xlabel('t',fontsize=20)
         plt.ylabel('Regret',fontsize=20)
-        plt.savefig(filename, bbox_inches='tight',pad_inches=0.0)
+        plt.savefig(filename, bbox_inches='tight')
         if pltshow:
             plt.show()
 

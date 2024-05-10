@@ -3,7 +3,7 @@
 from .KL_UCB import KL_UCB_Plus, KL_UCB
 from .Lower_bound import Lower_bound
 from .Simulator import CSMABInstance,CSMABInstance4lowerbound
-from .CombTS import CombTS_Basic, CombTS_Single, CombTS_Single_Aggr
+from .CombTS import CombTS_Basic, CombTS_Single
 from .CombUCB import CombUCB
 
 __all__ = ['TS_Basic', 'TS_MA', 'TS_TD', 'TS_Epsi', 

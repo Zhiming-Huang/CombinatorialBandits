@@ -9,7 +9,7 @@ sys.path.append(project_root)
 
 import src.TS as TS
 
-T = 10000
+T = 100000
 my_generator = np.random.default_rng()
 '''
 Generate mean value for 10 arms, the first 1 arm with mean value 0.9
@@ -18,7 +18,7 @@ and rest with mean value uniformly generated from 0.8 to 0.85
 N = 50
 m = 15
 delta = np.sqrt(N*np.log(N)/T)
-u = np.array(my_generator.uniform(0.9, 0.95, m).tolist() + my_generator.uniform(0.8, 0.85, N-m).tolist())
+u = np.array(my_generator.uniform(0.9, 0.95, m).tolist() + my_generator.uniform(0.85, 0.9, N-m).tolist())
 #u = [0.1,0.05,0.03,0.02,0.01]
 epsi = 1/len(u)
 num_exp = 100

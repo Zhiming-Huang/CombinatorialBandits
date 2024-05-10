@@ -51,7 +51,7 @@ class CombTS_Basic:
                 if self.alpha[k] == 0 and self.beta[k] == 0:
                     estimate_mean[k] = self.rnd_generator.normal(0, np.sqrt(self.m*np.log(self.t))/np.sqrt(self.alpha[k]+self.beta[k]+1))
                 else:
-                    estimate_mean[k] = self.rnd_generator.normal(self.alpha[k]/(self.alpha[k]+self.beta[k]), np.sqrt(0.1*self.m*np.log(self.t)/(self.alpha[k]+self.beta[k]+1)))
+                    estimate_mean[k] = self.rnd_generator.normal(self.alpha[k]/(self.alpha[k]+self.beta[k]), np.sqrt(0.01*self.m*np.log(self.t)/(self.alpha[k]+self.beta[k]+1)))
         
         ind = np.argpartition(estimate_mean[available_arms], -self.m)[-self.m:]
         return available_arms[ind]
@@ -86,32 +86,7 @@ class CombTS_Single(CombTS_Basic):
                 if self.alpha[k] == 0 and self.beta[k] == 0:
                     estimate_mean[k] = seed * 1/np.sqrt(self.alpha[k]+self.beta[k]+1)
                 else:
-                    estimate_mean[k] = self.alpha[k]/(self.alpha[k]+self.beta[k]) +  seed * np.sqrt(0.1*np.log(self.t)/(self.alpha[k]+self.beta[k]+1))
-        ind = np.argpartition(estimate_mean[available_arms], -self.m)[-self.m:]
-        return available_arms[ind]
-
-class CombTS_Single_Aggr(CombTS_Basic):
-    #implement Thompson sampling for beta distribution
-    def __init__(self, m, K, rnd_generator, bernoulli = True):
-        super().__init__(m, K, rnd_generator, bernoulli)
-
-
-    def draw_action(self, available_arms):
-        # play the first self.m arms with the highest thompson sampling value sampled from normal distribution
-        if len(available_arms) <= self.m:
-            return available_arms
-        estimate_mean = np.zeros(self.K)
-        if self.bernoulli:
-            for k in range(self.K):
-                estimate_mean[k] = self.rnd_generator.beta(self.alpha[k]+1, self.beta[k]+1)
-
-        else:
-            seed = self.rnd_generator.normal(0, 1)
-            for k in range(self.K):
-                if self.alpha[k] == 0 and self.beta[k] == 0:
-                    estimate_mean[k] = np.inf
-                else:
-                    estimate_mean[k] = self.alpha[k]/(self.alpha[k]+self.beta[k]) +  seed * 1/np.sqrt(self.alpha[k]+self.beta[k])
+                    estimate_mean[k] = self.alpha[k]/(self.alpha[k]+self.beta[k]) +  seed * np.sqrt(0.01*np.log(self.t)/(self.alpha[k]+self.beta[k]+1))
         ind = np.argpartition(estimate_mean[available_arms], -self.m)[-self.m:]
         return available_arms[ind]
 
