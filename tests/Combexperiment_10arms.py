@@ -9,7 +9,7 @@ sys.path.append(project_root)
 
 import src.TS as TS
 
-T = 10000
+T = 100000
 my_generator = np.random.default_rng()
 '''
 Generate mean value for 10 arms, the first 1 arm with mean value 0.9

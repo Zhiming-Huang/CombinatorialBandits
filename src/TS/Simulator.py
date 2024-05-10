@@ -221,8 +221,8 @@ class CSMABInstance:
             plt.legend(fontsize=20)
         # Create a ScalarFormatter object
         formatter = ScalarFormatter(useMathText=True)
-        formatter.set_scientific(use_sciformat)
-        formatter.set_powerlimits((-2,2))
+        formatter.set_scientific(True)
+        formatter.set_powerlimits((-1,1))
         plt.xticks(fontsize=20)
         plt.yticks(fontsize=20)
         # Apply the formatter to the y-axis
