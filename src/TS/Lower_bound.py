@@ -57,7 +57,8 @@ class Lower_bound():
 
     def lower_bound_gap_indep(self, t):
         #calculate the lower bound based on the formula: \sum_{i=2}^{K} \frac{\log t}{KL(\mu_1, \mu_i)}
-        return np.sqrt(self.m * self.K * t * np.log(self.K/self.m))
+        #return np.sqrt(self.m * self.K * t * np.log(self.K/self.m))
+        return np.sqrt(self.m * self.K * t )
     
     def lower_bound_gap_dep(self, t):
         #calculate the lower bound based on the formula: \sum_{i=2}^{K} \frac{\log t}{KL(\mu_1, \mu_i)}

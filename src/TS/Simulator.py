@@ -3,6 +3,7 @@ from .Lower_bound import Lower_bound
 from .CombTS import CombTS_Basic, CombTS_Single
 from .CombUCB import CombUCB
 
+from numba import njit, prange
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter
@@ -12,7 +13,7 @@ import pandas as pd
 import scipy.stats as stats
 
 class CSMABInstance:
-    def __init__(self, u, T, m, rnd_generator, num_exp, bernoulli=True, algorithms=None, markers=None):
+    def __init__(self, u, T, m, rnd_generator, num_exp, bernoulli=True, algorithms=None, markers=None, diffeps=False):
         """
         Initializes the Simulator object.
 
@@ -38,41 +39,80 @@ class CSMABInstance:
         if algorithms is not None:
             self.algorithms = algorithms
         else:
-            if bernoulli:
-                more_child_rngs = rnd_generator.spawn(5)
-                self.algorithms = {
-                    r'CTS-B': CombTS_Basic(m, self.K, more_child_rngs[0], True),  # TS with beta prior
-                    r'CTS-G': CombTS_Basic(m, self.K, more_child_rngs[1], False),  # TS with normal prior
-                    r'FSGPL': CombTS_Single(m, self.K, more_child_rngs[2], False),  # TS with normal prior (single seed)
-                    r'CombUCB': CombUCB(m, self.K, more_child_rngs[4]),  # CombUCB
-                }
+            if not diffeps:
+                if bernoulli:
+                    more_child_rngs = rnd_generator.spawn(6)
+                    self.algorithms = {
+                        r'CTS-B': CombTS_Basic(m, self.K, more_child_rngs[0], True),  # TS with beta prior
+                        r'CTS-G': CombTS_Basic(m, self.K, more_child_rngs[1], False),  # TS with normal prior
+                        r'CL-SG': CombTS_Single(m, self.K, more_child_rngs[2], False),  # TS with normal prior (single seed)
+                        r'CL-LG': CombTS_Single(m, self.K, more_child_rngs[2], False, True),  # TS with normal prior (single seed)
+                        r'CombUCB': CombUCB(m, self.K, more_child_rngs[4]),  # CombUCB
+                    }
+                else:
+                    more_child_rngs = rnd_generator.spawn(5)
+                    self.algorithms = {
+                        r'CTS-G': CombTS_Basic(m, self.K, more_child_rngs[1], False),  # TS with normal prior
+                        r'CL-SG': CombTS_Single(m, self.K, more_child_rngs[2], False),  # TS with normal prior (single seed)
+                        r'CombUCB': CombUCB(m, self.K, more_child_rngs[4]),  # CombUCB
+                    }
             else:
-                more_child_rngs = rnd_generator.spawn(5)
+                more_child_rngs = rnd_generator.spawn(14)
                 self.algorithms = {
-                    r'CTS-G': CombTS_Basic(m, self.K, more_child_rngs[1], False),  # TS with normal prior
-                    r'FSGPL': CombTS_Single(m, self.K, more_child_rngs[2], False),  # TS with normal prior (single seed)
+                    r'CTS-G ($\gamma = 0.01$)': CombTS_Basic(m, self.K, more_child_rngs[0], False, epsi = 0.01),  # TS with beta prior
+                    r'CTS-B': CombTS_Basic(m, self.K, more_child_rngs[1], True),  # TS with beta prior
                     r'CombUCB': CombUCB(m, self.K, more_child_rngs[4]),  # CombUCB
+                    r'CTS-G ($\gamma = 0.1$)': CombTS_Basic(m, self.K, more_child_rngs[2], False, epsi = 0.1),  # TS with normal prior
+                    r'CTS-G ($\gamma = 0.5$)': CombTS_Basic(m, self.K, more_child_rngs[3], False, epsi = 0.5),  # TS with normal prior
+                    r'CTS-G ($\gamma = 1$)': CombTS_Basic(m, self.K, more_child_rngs[4], False, epsi = 1),  # TS with normal prior (single seed)
+                    r'CL-SG ($\gamma = 0.01$)':CombTS_Single(m, self.K, more_child_rngs[5], False, epsi = 0.01),
+                    r'CL-SG ($\gamma = 0.1$)': CombTS_Single(m, self.K, more_child_rngs[6], False, epsi = 0.1),
+                    r'CL-SG ($\gamma = 0.5$)': CombTS_Single(m, self.K, more_child_rngs[7], False, epsi = 0.5),
+                    r'CL-SG ($\gamma = 1$)': CombTS_Single(m, self.K, more_child_rngs[8], False, epsi = 1),
+                    r'CL-LG ($\gamma = 0.01$)':CombTS_Single(m, self.K, more_child_rngs[9], False, True, epsi = 0.01),
+                    r'CL-LG ($\gamma = 0.1$)': CombTS_Single(m, self.K, more_child_rngs[10], False, True, epsi = 0.1),
+                    r'CL-LG ($\gamma = 0.5$)': CombTS_Single(m, self.K, more_child_rngs[11], False, True, epsi = 0.5),
+                    r'CL-LG ($\gamma = 1$)': CombTS_Single(m, self.K, more_child_rngs[12], False, True, epsi = 1),
                 }
 
         # Set the markers for the algorithms
         if markers is not None:
             self.markers = markers
         else:
-            if bernoulli:
-                self.markers = {
-                    r'CTS-B': 'o',
-                    r'CTS-G': 'd',
-                    r'FSGPL': 'x',
-                    r'FSAGPL': 'v',
-                    r'CombUCB': '<',
-                }
+            if not diffeps:
+                if bernoulli:
+                    self.markers = {
+                        r'CTS-B': 'o',
+                        r'CTS-G': 'd',
+                        r'CL-SG': 'x',
+                        r'CL-LG': 's',
+                        r'FSAGPL': 'v',
+                        r'CombUCB': '<',
+                    }
+                else:
+                    self.markers = {
+                        r'CTS-B': 'o',
+                        r'CTS-G': 'd',
+                        r'CL-SG': 'x',
+                        r'FSAGPL': 'v',
+                        r'CombUCB': '<',
+                    }
             else:
                 self.markers = {
-                    r'CTS-B': 'o',
-                    r'CTS-G': 'd',
-                    r'FSGPL': 'x',
-                    r'FSAGPL': 'v',
-                    r'CombUCB': '<',
+                    r'CTS-G ($\gamma = 0.01$)': 'o',
+                    r'CTS-B': 'd',
+                    r'CombUCB': 'x',
+                    r'CTS-G ($\gamma = 0.1$)': 'd',
+                    r'CTS-G ($\gamma = 0.5$)': 'd',
+                    r'CTS-G ($\gamma = 1$)': 'x',
+                    r'CL-SG ($\gamma = 0.01$)': 'v',
+                    r'CL-SG ($\gamma = 0.1$)': '<',
+                    r'CL-SG ($\gamma = 0.5$)': '<',
+                    r'CL-SG ($\gamma = 1$)': '>',
+                    r'CL-LG ($\gamma = 0.01$)': '^',
+                    r'CL-LG ($\gamma = 0.1$)': 's',
+                    r'CL-LG ($\gamma = 0.5$)': 'p',
+                    r'CL-LG ($\gamma = 1$)': 'P',
                 }
 
         # initialize the average rewards and regrets for each algorithm
@@ -143,6 +183,7 @@ class CSMABInstance:
         return opt_ave_rewards, average_rewards, regrets
     
     # Implement a function that can simulate the instance multiple times according to self.exp_num, save the result for each round to self.average_rewards and self.regrets
+    
     def simulate(self, rewards, available_arms):
         # generate bernoulli random variables based on rewards
         # rewards = self.rnd_generator.binomial(1, rewards)
@@ -292,12 +333,13 @@ class CSMABInstance4lowerbound(CSMABInstance):
             if bernoulli:
                 more_child_rngs = rnd_generator.spawn(5)
                 self.algorithms = {
-                    r'CTS-G': CombTS_Basic(m, self.K, more_child_rngs[1], False),  # TS with normal prior
+                    # r'CTS-G ($\gamma = 1$)': CombTS_Basic(m, self.K, more_child_rngs[1], False, epsi=1),  # TS with normal prior
+                    r'CL-SG ($\gamma = 1$)': CombTS_Single(m, self.K, more_child_rngs[2], False, epsi = 1),
                 }
             else:
                 more_child_rngs = rnd_generator.spawn(5)
                 self.algorithms = {
-                    r'CTS-G': CombTS_Basic(m, self.K, more_child_rngs[1], False),  # TS with normal prior
+                    r'CTS-G': CombTS_Basic(m, self.K, more_child_rngs[1], False, epsi=1),  # TS with normal prior
                 }
 
         # Set the markers for the algorithms
@@ -307,8 +349,8 @@ class CSMABInstance4lowerbound(CSMABInstance):
             if bernoulli:
                 self.markers = {
                     r'CTS': 'o',
-                    r'CTS-G': 'd',
-                    r'FSGPL': 'x',
+                    r'CTS-G ($\gamma = 1$)': 'd',
+                    r'CL-SG ($\gamma = 1$)': 'x',
                     r'FSAGPL': 'v',
                     r'CombUCB': '<',
                 }
@@ -316,7 +358,7 @@ class CSMABInstance4lowerbound(CSMABInstance):
                 self.markers = {
                     r'CTS': 'o',
                     r'FGPL': 'd',
-                    r'FSGPL': 'x',
+                    r'CL-SG': 'x',
                     r'FSAGPL': 'v',
                     r'CombUCB': '<',
                 }
@@ -340,7 +382,7 @@ class CSMABInstance4lowerbound(CSMABInstance):
         plt.rcParams['text.usetex'] = True
         plt.rcParams['font.size'] = fontsizes
         if pltlow_bound:
-            plt.plot(self.lower_bound_regrets, label = r'Lower Bound', marker = '^', markevery=int(self.T/10))     
+            plt.plot(0.01*self.lower_bound_regrets, label = r'Lower Bound', marker = '^', markevery=int(self.T/10))     
         for algorithm in self.algorithms:
             plt.plot(np.mean(self.regrets[algorithm], axis = 0), label = algorithm,
                      marker = self.markers[algorithm], markevery=int(self.T/10))
@@ -370,19 +412,19 @@ class CSMABInstance4lowerbound(CSMABInstance):
         if pltshow:
             plt.show()
 
-if __name__ == "__main__":
-    # module test program
-    my_generator = np.random.default_rng()
-    T = 10000
+# if __name__ == "__main__":
+#     # module test program
+#     my_generator = np.random.default_rng()
+#     T = 10000
 
-    # Generate mean value for 10 arms, the first with mean value 0.9, and rest with mean value 0.8
-    u = np.array([0.9] + [0.8]*9)
+#     # Generate mean value for 10 arms, the first with mean value 0.9, and rest with mean value 0.8
+#     u = np.array([0.9] + [0.8]*9)
 
-    epsi = 1/len(u)
+#     epsi = 1/len(u)
 
-    alpha = 0.9
+#     alpha = 0.9
 
-    instance = MABInstance(u, T, alpha, my_generator, 10)
+#     instance = MABInstance(u, T, alpha, my_generator, 10)
 
-    instance.plot_regrets(filename="../results/regrets_10arms.pdf")
+#     instance.plot_regrets(filename="../results/regrets_10arms.pdf")
 # %%

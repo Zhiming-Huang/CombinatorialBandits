@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 class CombTS_Basic:
     #implement Combinatorial Thompson sampling for Beta distribution or Normal distribution
-    def __init__(self, m, K, rnd_generator, bernoulli = True):
+    def __init__(self, m, K, rnd_generator, bernoulli = True,epsi = 0.1):
         # initialize the action set
        # self.actions = actions
         self.m = m  
@@ -20,6 +20,7 @@ class CombTS_Basic:
         # initialize the probabiltiy distribution
         # self.eta = np.log(K)/t
         self.t = 1
+        self.epsi = epsi
         
         #initialize the parameters for beta priors
         self.alpha = np.zeros(K)
@@ -36,6 +37,7 @@ class CombTS_Basic:
         self.beta = np.zeros(self.K)
 
 
+
     def draw_action(self, available_arms):
         # play the first self.m arms with the highest thompson sampling value sampled from normal distribution
         if len(available_arms) <= self.m:
@@ -49,9 +51,9 @@ class CombTS_Basic:
             #seed = self.rnd_generator.normal(0, 1, self.K)
             for k in range(self.K):
                 if self.alpha[k] == 0 and self.beta[k] == 0:
-                    estimate_mean[k] = self.rnd_generator.normal(0, np.sqrt(self.m*np.log(self.t))/np.sqrt(self.alpha[k]+self.beta[k]+1))
+                    estimate_mean[k] = self.rnd_generator.normal(0, np.sqrt(self.epsi*self.m*np.log(self.t))/np.sqrt(self.alpha[k]+self.beta[k]+1))
                 else:
-                    estimate_mean[k] = self.rnd_generator.normal(self.alpha[k]/(self.alpha[k]+self.beta[k]), np.sqrt(0.01*self.m*np.log(self.t)/(self.alpha[k]+self.beta[k]+1)))
+                    estimate_mean[k] = self.rnd_generator.normal(self.alpha[k]/(self.alpha[k]+self.beta[k]), np.sqrt(self.epsi*self.m*np.log(self.t)/(self.alpha[k]+self.beta[k]+1)))
         
         ind = np.argpartition(estimate_mean[available_arms], -self.m)[-self.m:]
         return available_arms[ind]
@@ -67,9 +69,11 @@ class CombTS_Basic:
 
 class CombTS_Single(CombTS_Basic):
     #implement Thompson sampling for beta distribution
-    def __init__(self, m, K, rnd_generator, bernoulli = True):
+    def __init__(self, m, K, rnd_generator, bernoulli = True, least_gaussian= False, epsi = 0.1):
         super().__init__(m, K, rnd_generator, bernoulli)
-
+        self.epsi = epsi
+        self.seed = self.rnd_generator.normal(0, 1)
+        self.least_gaussian = least_gaussian
 
     def draw_action(self, available_arms):
         # play the first self.m arms with the highest thompson sampling value sampled from normal distribution
@@ -81,12 +85,13 @@ class CombTS_Single(CombTS_Basic):
                 estimate_mean[k] = self.rnd_generator.beta(self.alpha[k]+1, self.beta[k]+1)
 
         else:
-            seed = self.rnd_generator.normal(0, 1)
+            if not self.least_gaussian:
+                self.seed = self.rnd_generator.normal(0, 1)
             for k in range(self.K):
                 if self.alpha[k] == 0 and self.beta[k] == 0:
-                    estimate_mean[k] = seed * 1/np.sqrt(self.alpha[k]+self.beta[k]+1)
+                    estimate_mean[k] = self.seed * np.sqrt(self.epsi*np.log(self.t))/np.sqrt(self.alpha[k]+self.beta[k]+1)
                 else:
-                    estimate_mean[k] = self.alpha[k]/(self.alpha[k]+self.beta[k]) +  seed * np.sqrt(0.01*np.log(self.t)/(self.alpha[k]+self.beta[k]+1))
+                    estimate_mean[k] = self.alpha[k]/(self.alpha[k]+self.beta[k]) +  self.seed * np.sqrt(self.epsi*np.log(self.t)/(self.alpha[k]+self.beta[k]+1))
         ind = np.argpartition(estimate_mean[available_arms], -self.m)[-self.m:]
         return available_arms[ind]
 

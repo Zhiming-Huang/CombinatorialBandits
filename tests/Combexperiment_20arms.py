@@ -18,7 +18,7 @@ and rest with mean value uniformly generated from 0.8 to 0.85
 N = 50
 m = 15
 delta = np.sqrt(N*np.log(N)/T)
-u = np.array(my_generator.uniform(0.9, 0.95, m).tolist() + my_generator.uniform(0.85, 0.9, N-m).tolist())
+u = np.array(my_generator.uniform(0.725, 0.75, m).tolist() + my_generator.uniform(0.7, 0.725, N-m).tolist())
 #u = [0.1,0.05,0.03,0.02,0.01]
 epsi = 1/len(u)
 num_exp = 100
@@ -39,8 +39,8 @@ instance.simulate(rewards, available_arms)
 instance.plot_regrets(errorbar=True, 
                         filename="./results/CSMAB_regrets_20arms_Bernoulli.pdf", 
                         pltlow_bound = False, legend=True)
-instance.plot_average_rewards(errorbar=True,
-                        filename="./results/CSMAB_average_rewards_20arms_Bernoulli.pdf")
+# instance.plot_average_rewards(errorbar=True,
+#                         filename="./results/CSMAB_average_rewards_20arms_Bernoulli.pdf")
 
 # %%
 
