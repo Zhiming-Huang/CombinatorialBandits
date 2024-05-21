@@ -38,7 +38,7 @@ available_arms = np.tile(u_aval, (T, 1)).T #repeat the mean values for all arms 
 
 instance = TS.CSMABInstance4lowerbound(u, T, m, my_generator, num_exp)
 instance.simulate(rewards, available_arms)
-instance.plot_regrets(errorbar=False, 
+instance.plot_regrets(errorbar=True, 
                         filename="./results/CSMAB_lower_bound_50arms_Bernoulli_CL-SG.pdf", 
                         pltlow_bound = True, legend=True)
 # instance.plot_regrets(errorbar=False, 

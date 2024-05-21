@@ -11,6 +11,7 @@ import numpy as np
 import seaborn as sns
 import pandas as pd
 import scipy.stats as stats
+from tqdm import trange,tqdm
 
 class CSMABInstance:
     def __init__(self, u, T, m, rnd_generator, num_exp, bernoulli=True, algorithms=None, markers=None, diffeps=False):
@@ -189,7 +190,7 @@ class CSMABInstance:
         # rewards = self.rnd_generator.binomial(1, rewards)
         # available_arms = self.rnd_generator.binomial(1, available_arms)     
 
-        for exp in range(self.num_exp):
+        for exp in trange(self.num_exp, desc = 'Experiment Number'):
             if self.bernoulli:
                 rnd_rewards = self.rnd_generator.binomial(1, rewards)
             else:
@@ -201,6 +202,7 @@ class CSMABInstance:
             for algorithm in self.algorithms:
                 self.average_rewards[algorithm][exp] = average_rewards[algorithm]
                 self.regrets[algorithm][exp] = regrets[algorithm]
+            print("Experiment progress: {}%: ".format(exp / self.num_exp), "▋" * (exp // self.num_exp), end="")
         
     
     # implement a function that can plot the average rewards for each algorithm with error bars
