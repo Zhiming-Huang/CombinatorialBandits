@@ -1,9 +1,7 @@
-from .KL_UCB import KL_UCB_Plus
 from .Lower_bound import Lower_bound
 from .CombTS import CombTS_Basic, CombTS_Single
 from .CombUCB import CombUCB
 
-from numba import njit, prange
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter
@@ -36,87 +34,10 @@ class CSMABInstance:
         self.num_exp = num_exp
         self.m = m
 
-        # Set parameters for the algorithms
-        if algorithms is not None:
-            self.algorithms = algorithms
-        else:
-            if not diffeps:
-                if bernoulli:
-                    more_child_rngs = rnd_generator.spawn(6)
-                    self.algorithms = {
-                        r'CTS-B': CombTS_Basic(m, self.K, more_child_rngs[0], True),  # TS with beta prior
-                        r'CTS-G': CombTS_Basic(m, self.K, more_child_rngs[1], False),  # TS with normal prior
-                        r'CL-SG': CombTS_Single(m, self.K, more_child_rngs[2], False),  # TS with normal prior (single seed)
-                        r'CL-LG': CombTS_Single(m, self.K, more_child_rngs[2], False, True),  # TS with normal prior (single seed)
-                        r'CombUCB': CombUCB(m, self.K, more_child_rngs[4]),  # CombUCB
-                    }
-                else:
-                    more_child_rngs = rnd_generator.spawn(5)
-                    self.algorithms = {
-                        r'CTS-G': CombTS_Basic(m, self.K, more_child_rngs[1], False),  # TS with normal prior
-                        r'CL-SG': CombTS_Single(m, self.K, more_child_rngs[2], False),  # TS with normal prior (single seed)
-                        r'CombUCB': CombUCB(m, self.K, more_child_rngs[4]),  # CombUCB
-                    }
-            else:
-                more_child_rngs = rnd_generator.spawn(14)
-                self.algorithms = {
-                    r'CTS-G ($\gamma = 0.01$)': CombTS_Basic(m, self.K, more_child_rngs[0], False, epsi = 0.01),  # TS with beta prior
-                    r'CTS-B': CombTS_Basic(m, self.K, more_child_rngs[1], True),  # TS with beta prior
-                    r'CombUCB': CombUCB(m, self.K, more_child_rngs[4]),  # CombUCB
-                    r'CTS-G ($\gamma = 0.1$)': CombTS_Basic(m, self.K, more_child_rngs[2], False, epsi = 0.1),  # TS with normal prior
-                    r'CTS-G ($\gamma = 0.5$)': CombTS_Basic(m, self.K, more_child_rngs[3], False, epsi = 0.5),  # TS with normal prior
-                    r'CTS-G ($\gamma = 1$)': CombTS_Basic(m, self.K, more_child_rngs[4], False, epsi = 1),  # TS with normal prior (single seed)
-                    r'CL-SG ($\gamma = 0.01$)':CombTS_Single(m, self.K, more_child_rngs[5], False, epsi = 0.01),
-                    r'CL-SG ($\gamma = 0.1$)': CombTS_Single(m, self.K, more_child_rngs[6], False, epsi = 0.1),
-                    r'CL-SG ($\gamma = 0.5$)': CombTS_Single(m, self.K, more_child_rngs[7], False, epsi = 0.5),
-                    r'CL-SG ($\gamma = 1$)': CombTS_Single(m, self.K, more_child_rngs[8], False, epsi = 1),
-                    r'CL-LG ($\gamma = 0.01$)':CombTS_Single(m, self.K, more_child_rngs[9], False, True, epsi = 0.01),
-                    r'CL-LG ($\gamma = 0.1$)': CombTS_Single(m, self.K, more_child_rngs[10], False, True, epsi = 0.1),
-                    r'CL-LG ($\gamma = 0.5$)': CombTS_Single(m, self.K, more_child_rngs[11], False, True, epsi = 0.5),
-                    r'CL-LG ($\gamma = 1$)': CombTS_Single(m, self.K, more_child_rngs[12], False, True, epsi = 1),
-                }
 
-        # Set the markers for the algorithms
-        if markers is not None:
-            self.markers = markers
-        else:
-            if not diffeps:
-                if bernoulli:
-                    self.markers = {
-                        r'CTS-B': 'o',
-                        r'CTS-G': 'd',
-                        r'CL-SG': 'x',
-                        r'CL-LG': 's',
-                        r'FSAGPL': 'v',
-                        r'CombUCB': '<',
-                    }
-                else:
-                    self.markers = {
-                        r'CTS-B': 'o',
-                        r'CTS-G': 'd',
-                        r'CL-SG': 'x',
-                        r'FSAGPL': 'v',
-                        r'CombUCB': '<',
-                    }
-            else:
-                self.markers = {
-                    r'CTS-G ($\gamma = 0.01$)': 'o',
-                    r'CTS-B': 'd',
-                    r'CombUCB': 'x',
-                    r'CTS-G ($\gamma = 0.1$)': 'd',
-                    r'CTS-G ($\gamma = 0.5$)': 'd',
-                    r'CTS-G ($\gamma = 1$)': 'x',
-                    r'CL-SG ($\gamma = 0.01$)': 'v',
-                    r'CL-SG ($\gamma = 0.1$)': '<',
-                    r'CL-SG ($\gamma = 0.5$)': '<',
-                    r'CL-SG ($\gamma = 1$)': '>',
-                    r'CL-LG ($\gamma = 0.01$)': '^',
-                    r'CL-LG ($\gamma = 0.1$)': 's',
-                    r'CL-LG ($\gamma = 0.5$)': 'p',
-                    r'CL-LG ($\gamma = 1$)': 'P',
-                }
+        self.algorithms = algorithms
+        self.markers = markers
 
-        # initialize the average rewards and regrets for each algorithm
         self.average_rewards = {}
         self.regrets = {}
 
@@ -126,15 +47,14 @@ class CSMABInstance:
             self.average_rewards[algorithm] = np.zeros([self.num_exp, T])
             self.regrets[algorithm] = np.zeros([self.num_exp, T])
 
-        self.lower_bound_regrets = self.calculate_lower_bound()
+        #self.lower_bound_regrets = self.calculate_lower_bound()
 
-    def calculate_lower_bound(self):
-        lower_bound = Lower_bound(self.K, self.u, self.m, self.bernoulli, gap_deps=False)
-        regrets = np.zeros(self.T)
-        for t in range(self.T):
-            regrets[t] = lower_bound.lower_bound(t)
+    # def calculate_lower_bound(self):
+    #     regrets = np.zeros(self.T)
+    #     for t in range(self.T):
+    #         regrets[t] = np.sqrt(self.m * self.K * t )
         
-        return regrets
+    #     return regrets
 
 
     def simulate_one_round(self, rewards, available_arms):
@@ -196,7 +116,8 @@ class CSMABInstance:
             else:
                 # generate gaussian random variables based on rewards
                 rnd_rewards = self.rnd_generator.normal(rewards, 1)
-            rnd_available_arms = self.rnd_generator.binomial(1, available_arms)     
+            rnd_available_arms = self.rnd_generator.binomial(1, available_arms)  
+
             opt_ave_rewards, average_rewards, regrets = self.simulate_one_round(rnd_rewards, rnd_available_arms)
             self.opt_average_rewards[exp] = opt_ave_rewards
             for algorithm in self.algorithms:
@@ -244,7 +165,7 @@ class CSMABInstance:
     def plot_regrets(self, errorbar=False, filename="regrets.pdf", fontsizes=20, pltshow = False,   pltlow_bound = False, use_sciformat = False, legend = False):
         sns.set_theme()
         sns.set_style("whitegrid")
-        plt.figure()
+        plt.figure(figsize=(4, 3))
         plt.rcParams['text.usetex'] = True
         plt.rcParams['font.size'] = fontsizes
         if pltlow_bound:
@@ -261,20 +182,20 @@ class CSMABInstance:
         
         if legend:
             #plt.legend(loc='upper left', bbox_to_anchor=(-0.6, 1))
-            plt.legend(fontsize=20)
+            plt.legend(fontsize=10)
         # Create a ScalarFormatter object
         formatter = ScalarFormatter(useMathText=True)
         formatter.set_scientific(True)
         formatter.set_powerlimits((-1,1))
-        plt.xticks(fontsize=20)
-        plt.yticks(fontsize=20)
+        plt.xticks(fontsize=10)
+        plt.yticks(fontsize=10)
         # Apply the formatter to the y-axis
         plt.gca().yaxis.set_major_formatter(formatter)
         # Apply the formatter to the x-axis
         plt.gca().xaxis.set_major_formatter(formatter)
         plt.grid(True)
-        plt.xlabel('t',fontsize=20)
-        plt.ylabel('Regret',fontsize=20)
+        plt.xlabel('t',fontsize=10)
+        plt.ylabel('Regret',fontsize=10)
         plt.savefig(filename, bbox_inches='tight')
         if pltshow:
             plt.show()
@@ -306,7 +227,7 @@ class CSMABInstance:
 
 class CSMABInstance4lowerbound(CSMABInstance):
     #inherite CSMABInstance
-    def __init__(self, u, T, m, rnd_generator, num_exp, bernoulli=True, algorithms=None, markers=None):
+    def __init__(self, u, T, m, rnd_generator, num_exp, bernoulli=True, algorithms=None, markers=None, lower_bound_regrets=None):
         """
         Initializes the Simulator object.
 
@@ -327,6 +248,7 @@ class CSMABInstance4lowerbound(CSMABInstance):
         self.K = len(u)
         self.num_exp = num_exp
         self.m = m
+        
 
         # Set parameters for the algorithms
         if algorithms is not None:
@@ -348,21 +270,21 @@ class CSMABInstance4lowerbound(CSMABInstance):
         if markers is not None:
             self.markers = markers
         else:
-            if bernoulli:
-                self.markers = {
-                    r'CTS': 'o',
-                    r'CTS-G ($\gamma = 1$)': 'd',
-                    r'CL-SG ($\gamma = 1$)': 'x',
-                    r'FSAGPL': 'v',
-                    r'CombUCB': '<',
-                }
-            else:
-                self.markers = {
-                    r'CTS': 'o',
-                    r'FGPL': 'd',
-                    r'CL-SG': 'x',
-                    r'FSAGPL': 'v',
-                    r'CombUCB': '<',
+            self.markers = {
+                    r'CTS-G ($\gamma = 0.01$)': 'o',
+                    r'CTS-B': '8',
+                    r'CombUCB': 'x',
+                    r'CTS-G ($\gamma = 0.1$)': 'h',
+                    r'CTS-G ($\gamma = 0.5$)': 'H',
+                    r'CTS-G ($\gamma = 1$)': '*',
+                    r'CL-SG ($\gamma = 0.01$)': 'v',
+                    r'CL-SG ($\gamma = 0.1$)': 'd',
+                    r'CL-SG ($\gamma = 0.5$)': '<',
+                    r'CL-SG ($\gamma = 1$)': '>',
+                    r'CL-LG ($\gamma = 0.01$)': '^',
+                    r'CL-LG ($\gamma = 0.1$)': 's',
+                    r'CL-LG ($\gamma = 0.5$)': 'p',
+                    r'CL-LG ($\gamma = 1$)': 'P',
                 }
 
         # initialize the average rewards and regrets for each algorithm
@@ -375,41 +297,43 @@ class CSMABInstance4lowerbound(CSMABInstance):
             self.average_rewards[algorithm] = np.zeros([self.num_exp, T])
             self.regrets[algorithm] = np.zeros([self.num_exp, T])
 
-        self.lower_bound_regrets = self.calculate_lower_bound()
+        self.lower_bound_regrets = lower_bound_regrets
 
-    def plot_regrets(self, errorbar=False, filename="regrets.pdf", fontsizes=20, pltshow = False,   pltlow_bound = False, use_sciformat = False, legend = False):
+    def plot_regrets(self, errorbar=False, filename="regrets.pdf", fontsizes=20, pltshow = False,   pltlow_bound = False, use_sciformat = False, legend = False, coeff=0.5):
         sns.set_theme()
         sns.set_style("whitegrid")
-        plt.figure()
+        plt.figure(figsize=(4, 3))
         plt.rcParams['text.usetex'] = True
         plt.rcParams['font.size'] = fontsizes
+        T_sampled = np.arange(0, self.T, 10)
         if pltlow_bound:
-            plt.plot(0.01*self.lower_bound_regrets, label = r'Lower Bound', marker = '^', markevery=int(self.T/10))     
+            plt.plot(T_sampled, coeff*self.lower_bound_regrets[T_sampled], label = r'Lower Bound', marker = '^', markevery=1000)     
         for algorithm in self.algorithms:
-            plt.plot(np.mean(self.regrets[algorithm], axis = 0), label = algorithm,
-                     marker = self.markers[algorithm], markevery=int(self.T/10))
+            plt.plot(T_sampled, np.mean(self.regrets[algorithm], axis = 0)[T_sampled], label = algorithm,
+                     marker = self.markers[algorithm], markevery=1000)
             if errorbar:
                 #calculate 95% confidence interval for the mean
                 t_critical = stats.t.ppf(0.975, self.num_exp-1)
                 ci = t_critical * np.std(self.regrets[algorithm], axis = 0) / np.sqrt(self.num_exp)
-                plt.fill_between(range(self.T), np.mean(self.regrets[algorithm], axis = 0) - ci, 
-                                 np.mean(self.regrets[algorithm], axis = 0) + ci, alpha = 0.1)
+                plt.fill_between(T_sampled, np.mean(self.regrets[algorithm], axis = 0)[T_sampled] - ci[T_sampled], 
+                                 np.mean(self.regrets[algorithm], axis = 0)[T_sampled] + ci[T_sampled], alpha = 0.1)
         
         if legend:
             #plt.legend(loc='upper left', bbox_to_anchor=(-0.6, 1))
-            plt.legend()
+            plt.legend(fontsize=10)
         # Create a ScalarFormatter object
         formatter = ScalarFormatter(useMathText=True)
         formatter.set_scientific(use_sciformat)
-        formatter.set_powerlimits((-2,2))
-
+        formatter.set_powerlimits((-1,1))
+        plt.xticks(fontsize=10)
+        plt.yticks(fontsize=10)
         # Apply the formatter to the y-axis
         plt.gca().yaxis.set_major_formatter(formatter)
         # Apply the formatter to the x-axis
         plt.gca().xaxis.set_major_formatter(formatter)
         plt.grid(True)
-        plt.xlabel('T')
-        plt.ylabel('Regret')
+        plt.xlabel('T',fontsize=10)
+        plt.ylabel('Regret',fontsize=10)
         plt.savefig(filename, bbox_inches='tight')
         if pltshow:
             plt.show()

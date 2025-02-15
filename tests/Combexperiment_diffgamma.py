@@ -108,8 +108,8 @@ instance.plot_regrets(errorbar=True,
 
 instance.algorithms = {
                     r'CTS-G ($\gamma = 0.01$)':TS.CombTS_Single(m, N, more_child_rngs[9], False, True, epsi = 0.01),
-                    r'CL-SG ($\gamma = 0.01$)': TS.CombTS_Single(m, N, more_child_rngs[10], False, True, epsi = 0.1),
-                    r'CL-LG ($\gamma = 0.01$)': TS.CombTS_Single(m, N, more_child_rngs[11], False, True, epsi = 0.5),
+                    r'CL-SG ($\gamma = 0.1$)': TS.CombTS_Single(m, N, more_child_rngs[10], False, True, epsi = 0.1),
+                    r'CL-LG ($\gamma = 0.5$)': TS.CombTS_Single(m, N, more_child_rngs[11], False, True, epsi = 0.5),
                 }
 instance.plot_regrets(errorbar=True, 
                         filename="./results/CSMAB_regrets_10arms_diffgamma_all.pdf", 

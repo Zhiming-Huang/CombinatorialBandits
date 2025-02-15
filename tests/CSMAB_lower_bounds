@@ -2,7 +2,11 @@
 import sys
 import os
 import numpy as np
-from sympy import false
+# from sympy import false
+import matplotlib.pyplot as plt
+import seaborn as sns
+import scipy.stats as stats
+from matplotlib.ticker import ScalarFormatter
 
 current_directory = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(current_directory)
@@ -11,15 +15,15 @@ sys.path.append(project_root)
 import src.TS as TS
 
 T = 100000
-my_generator = np.random.default_rng()
+my_generator = np.random.default_rng(10000)
 '''
 Generate mean value for 10 arms, the first 1 arm with mean value 0.9
 and rest with mean value uniformly generated from 0.8 to 0.85
 '''
-N = 10
-m = 3
+N = 100
+m = 10
 delta = np.sqrt(N*np.log(N)/T)
-u = np.array(np.full(m, 0.9).tolist() + np.full(N-m, 0.8).tolist())
+u = np.array(np.full(m, 0.925).tolist() + np.full(N-m, 0.9).tolist())
 #u = np.array([0.1,0.05,0.03,0.02,0.01,0.1,0.05,0.03,0.02,0.01])
 epsi = 1/len(u)
 num_exp = 100
@@ -35,16 +39,41 @@ available_arms = np.tile(u_aval, (T, 1)).T #repeat the mean values for all arms 
 #     lower_regrets[t] = lower_bound.lower_bound(t)
 
 
+more_child_rngs = my_generator.spawn(2)
 
-instance = TS.CSMABInstance4lowerbound(u, T, m, my_generator, num_exp)
+# The lower bound regret for CTS-G:
+lower_bound = np.zeros(T)
+for t in range(T):
+    lower_bound[t] = np.sqrt(m * N * t*np.log(N/m))
+
+TS_algorithms = {r'CTS-G ($\gamma = 1$)': TS.CombTS_Basic(m, N, more_child_rngs[1], False, epsi=1)}
+instance = TS.CSMABInstance4lowerbound(u, T, m, my_generator, num_exp, algorithms = TS_algorithms, lower_bound_regrets=lower_bound)
+
+
 instance.simulate(rewards, available_arms)
 instance.plot_regrets(errorbar=True, 
-                        filename="./results/CSMAB_lower_bound_50arms_Bernoulli_CL-SG.pdf", 
-                        pltlow_bound = True, legend=True)
-# instance.plot_regrets(errorbar=False, 
-#                         filename="./results/CSMAB_lower_bound_50arms_Bernoulli_CL-SG.pdf", 
-#                         pltlow_bound = True, legend=True)
-# instance.plot_average_rewards(errorbar=True,
-#                         filename="./results/CSMAB_average_rewards_20arms_Bernoulli.pdf")
+                        filename="./results/CSMAB_lower_bound_100arms_Bernoulli_CTS-G.pdf", 
+                        pltlow_bound = True, legend=True, coeff=0.1)
+
+
+
+
+lower_bound = np.zeros(T)
+for t in range(T):
+    lower_bound[t] = np.sqrt(m * N * t) 
+
+TS_algorithms = {r'CL-SG ($\gamma = 1$)': TS.CombTS_Single(m, N, more_child_rngs[1], False, epsi = 1)}
+instance = TS.CSMABInstance4lowerbound(u, T, m, my_generator, num_exp, algorithms=TS_algorithms, lower_bound_regrets=lower_bound)
+instance.simulate(rewards, available_arms)
+instance.plot_regrets(errorbar=True, 
+                        filename="./results/CSMAB_lower_bound_100arms_Bernoulli_CL-SG.pdf", 
+                        pltlow_bound = True, legend=True, coeff=0.1)
+
+TS_algorithms = {r'CL-LG ($\gamma = 1$)': TS.CombTS_Single(m, N, more_child_rngs[1], False, True, epsi = 1)}
+instance = TS.CSMABInstance4lowerbound(u, T, m, my_generator, num_exp, algorithms=TS_algorithms, lower_bound_regrets=lower_bound)
+instance.simulate(rewards, available_arms)
+instance.plot_regrets(errorbar=True, 
+                        filename="./results/CSMAB_lower_bound_100arms_Bernoulli_CL-LG.pdf", 
+                        pltlow_bound = True, legend=True, coeff=0.1)
 # %%
 

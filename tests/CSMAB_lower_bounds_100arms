@@ -10,8 +10,8 @@ sys.path.append(project_root)
 
 import src.TS as TS
 
-T = 10000
-my_generator = np.random.default_rng()
+T = 100000
+my_generator = np.random.default_rng(10000)
 '''
 Generate mean value for 10 arms, the first 1 arm with mean value 0.9
 and rest with mean value uniformly generated from 0.8 to 0.85
@@ -39,7 +39,7 @@ available_arms = np.tile(u_aval, (T, 1)).T #repeat the mean values for all arms 
 
 instance = TS.CSMABInstance4lowerbound(u, T, m, my_generator, num_exp)
 instance.simulate(rewards, available_arms)
-instance.plot_regrets(errorbar=False, 
+instance.plot_regrets(errorbar=True, 
                         filename="./results/CSMAB_lower_bound_50arms_Bernoulli.pdf", 
                         pltlow_bound = True, legend=True)
 
