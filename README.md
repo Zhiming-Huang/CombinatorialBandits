@@ -1,6 +1,6 @@
-# Thompson Sampling for Semi-bandits with Sleeping
+# Combinatorial bandit algorithms
 
-This repository is the official implementation of the experimenets in paper.
+This repository is the implementation of combinatorial bandit algorithms. Currently, only stochastic bandit algorithms are implemented and more algorithms are to be added.
 
 ## Requirements
 
@@ -11,21 +11,11 @@ pip install -r requirements.txt
 ```
 
 ## Structure
-
+The source code of simulator and various algorithms can be found in src/
+The experiment script can be found in tests/
+The Results can be found in tests/results/
 
 ## Evaluation
-
-There are 
-
-
-## Results
-
-Our model achieves the following performance on :
-
-### [Image Classification on ImageNet](https://paperswithcode.com/sota/image-classification-on-imagenet)
+Currently, we provide two tests, which can be found in tests. 
 
 
-
-## Contributing
-
->📋  Pick a licence and describe how to contribute to your code repository. 
